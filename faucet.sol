@@ -23,7 +23,8 @@ mapping (address => uint) public verifiedAddress;
 
                             /*the events*/
 
-event funded(address origin, uint amount);
+event funded(address from, uint amount);
+event faucet(address to, uint amount);
 event newAllowed(address allowed);
 
                             /* adding allowed address */
@@ -50,7 +51,7 @@ event newAllowed(address allowed);
             verifiedAddress[msg.sender]=block.timestamp + 86400;
             //86400=24*60*60 secondes therefore allowing for a daily reKeth
         if (!msg.sender.call.value(1000000000000000000)()) throw;
-        funded(msg.sender, 1000000000000000000);       
+        faucet(msg.sender, 1000000000000000000);       
         }    
     }
 
