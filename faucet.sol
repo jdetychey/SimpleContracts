@@ -24,7 +24,7 @@ contract Faucet is Owned {
     event FundsSent(address recipient, uint amount);
     event RecipientAdded(address allowed);
     
-    uint GAS_TIP = 36000;
+    uint GAS_TIP = 5000000000000000;
     uint DAILY_AMOUNT = 1000000000000000000;
 
     modifier allowedOnly() {
