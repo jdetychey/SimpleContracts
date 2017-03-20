@@ -17,54 +17,43 @@ contract Owned {
 }
 
 contract Faucet is Owned {
-                            /* the mapping */
 
-mapping (address => uint) public verifiedAddress;
-
-                            /*the events*/
-
-event funded(address from, uint amount);
-event faucet(address to, uint amount);
-event newAllowed(address allowed);
-
-                            /* adding allowed address */
-
-    function addAllowed(address _newAllowed) ownerOnly {
-        verifiedAddress[_newAllowed]=1;
-         if (!_newAllowed.call.value(36000)()) throw;
-         // adding an address send a few wei to pay for reKeth (-: 
-        newAllowed(_newAllowed);
-    }
-
-                /*internal function checking if the msg.sender
-                        is allowed to use the faucet*/
-
-    function isAllowed (address _isAllowed) internal returns (bool) {
-        if (verifiedAddress[_isAllowed] != 0) {
-            if (verifiedAddress[_isAllowed]<block.timestamp) 
-            return true ;}
-        return false;
-    }
-
-    function reKeth()  { //get the pun ? request - reKeth? ok I'm out.
-        if (isAllowed(msg.sender)){
-            verifiedAddress[msg.sender]=block.timestamp + 86400;
-            //86400=24*60*60 secondes therefore allowing for a daily reKeth
-        if (!msg.sender.call.value(1000000000000000000)()) throw;
-        faucet(msg.sender, 1000000000000000000);       
-        }    
-    }
-
-                        /* funding the faucet*/
+    mapping (address => uint) public isVerified;
     
+    event FundsReceived(address origin, uint amount);
+    event FundsSent(address recipient, uint amount);
+    event RecipientAdded(address allowed);
+    
+    uint GAS_TIP = 36000;
+    uint DAILY_AMOUNT = 1000000000000000000;
+
+    modifier allowedOnly() {
+        if(isVerified[msg.sender] == 0 || isVerified[msg.sender] > now) return;
+        _;
+    }
+
+    function verify(address candidate) ownerOnly {
+        isVerified[candidate] = now;
+        // adding an address send a few wei to pay for reKeth (-: 
+        candidate.transfer(GAS_TIP);
+        RecipientAdded(candidate);
+    }
+
+    function reKeth() allowedOnly()  { 
+        // get the pun ? request - reKeth? ok I'm out.
+        msg.sender.transfer(DAILY_AMOUNT);
+        // kindly ask to come back in one day
+        isVerified[msg.sender] = now + 1 days;
+        FundsSent(msg.sender, DAILY_AMOUNT);       
+    }
+
     function fund() payable {
-    funded(msg.sender,msg.value);
+        if(msg.value == 0) return;
+        FundsReceived(msg.sender, msg.value);
     }
     
-                        /*Panic cleaning*/
-
-    function removeAllowed(address _removeAllowed) ownerOnly {
-        verifiedAddress[_removeAllowed]=0;
+    function unverify(address candidate) ownerOnly {
+        isVerified[candidate] = 0;
     }
 
     function TheMightyBackdoor() ownerOnly{
